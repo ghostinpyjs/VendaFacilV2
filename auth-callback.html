@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autenticando... — VendaFácil</title>
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--surface);
+    font-family: 'Sora', sans-serif;
+  }
+  .callback-box {
+    text-align: center; padding: 3rem; background: white;
+    border-radius: 20px; border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08); max-width: 400px; width: 90%;
+  }
+  .spinner {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 4px solid var(--green-light); border-top-color: var(--green);
+    animation: spin .8s linear infinite; margin: 0 auto 1.5rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h3 { font-size: 1.1rem; font-weight: 700; color: var(--slate); margin-bottom: 0.5rem; }
+  p { font-size: 0.88rem; color: var(--muted); }
+  .brand { color: var(--green); font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="callback-box">
+  <div class="spinner"></div>
+  <h3>Finalizando login...</h3>
+  <p>Aguarde, estamos conectando sua conta Google ao <span class="brand">VendaFácil</span>.</p>
+</div>
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Injeta configuração (normalmente via servidor; aqui hardcoded como fallback)
+  window.ENV = {
+    SUPABASE_URL: '',   // Preencha com SUPABASE_URL do .env
+    SUPABASE_ANON_KEY: '' // Preencha com SUPABASE_ANON_KEY do .env
+  };
+</script>
+<script type="module">
+  import { Auth } from '../js/supabase.js';
+
+  async function handleCallback() {
+    // Supabase lida automaticamente com o hash #access_token da URL
+    const session = await Auth.getSession();
+
+    if (session) {
+      // Criar/atualizar perfil para usuários Google
+      const user = session.user;
+      if (user) {
+        const { Profiles } = await import('../js/supabase.js');
+        await Profiles.update(user.id, {
+          nome: user.user_metadata?.full_name || user.user_metadata?.nome || '',
+          email: user.email,
+          avatar_url: user.user_metadata?.avatar_url || ''
+        });
+      }
+      window.location.href = '/pages/perfil.html';
+    } else {
+      // Falha no login
+      document.querySelector('.callback-box').innerHTML = `
+        <div style="font-size:2rem;margin-bottom:1rem;">✗</div>
+        <h3 style="color:#EF4444;">Erro na autenticação</h3>
+        <p>Não foi possível concluir o login com Google.</p>
+        <a href="/" style="display:inline-block;margin-top:1.5rem;color:var(--green);font-weight:600;">
+          Voltar ao início
+        </a>
+      `;
+    }
+  }
+
+  handleCallback();
+</script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendaFácil — Sistema de Vendas para Pequenos Negócios</title>
+<link rel="stylesheet" href="css/styles.css">
+
+<!-- QRCode.js para Pix -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Configuração de ambiente (normalmente gerada pelo servidor a partir do .env) -->
+<script>
+  window.ENV = {
+    SUPABASE_URL: '',          // Preencha com o valor do .env
+    SUPABASE_ANON_KEY: ''      // Preencha com o valor do .env
+  };
+
+  // Configuração de pagamentos (preenchida pelo servidor)
+  window.PAYMENT_CONFIG = {
+    stripe_enabled: false,     // true se STRIPE_PUBLIC_KEY estiver no .env
+    pix_enabled: false,        // true se IMAP_HOST estiver no .env
+    pix_chave: '81991610473',  // PIX_CHAVE do .env
+    pix_beneficiario: 'VendaFacil',
+    pix_cidade: 'Recife',
+    stripe_public_key: ''      // STRIPE_PUBLIC_KEY do .env
+  };
+</script>
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+<nav>
+  <a href="#" class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </div>
+    Venda<span>Fácil</span>
+  </a>
+  <ul>
+    <li><a href="#funcionalidades">Funcionalidades</a></li>
+    <li><a href="#como-funciona">Como Funciona</a></li>
+    <li><a href="#precos">Preços</a></li>
+    <li><a href="#faq">Dúvidas</a></li>
+    <li id="navActions">
+      <a href="#" class="btn-nav" onclick="openModal(); return false;">Começar Grátis</a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 5%;">
+  <div class="hero" style="padding-left: 0; padding-right: 0;">
+
+    <div>
+      <div class="hero-badge">Para pequenos negócios</div>
+      <h1>O sistema de vendas que o seu negócio <em>merecia</em></h1>
+      <p>Controle estoque, registre vendas, emita relatórios e gerencie clientes — tudo em um só lugar. Simples como deve ser.</p>
+      <div class="hero-ctas">
+        <a href="#" class="btn-primary" onclick="openModal(); return false;">
+          Criar conta grátis
+        </a>
+        <a href="#como-funciona" class="btn-secondary">
+          Ver como funciona
+        </a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-avatars">
+          <span>JA</span>
+          <span>MS</span>
+          <span>RL</span>
+          <span>CF</span>
+        </div>
+        <span><strong style="color: var(--slate);">+2.400</strong> comerciantes já usam o VendaFácil</span>
+      </div>
+    </div>
+
+    <!-- Mockup -->
+    <div class="hero-visual">
+      <div class="mockup-shell">
+        <div class="mockup-topbar">
+          <div class="mockup-dot" style="background: #FF5F57;"></div>
+          <div class="mockup-dot" style="background: #FFBD2E;"></div>
+          <div class="mockup-dot" style="background: #28CA41;"></div>
+        </div>
+        <div class="mockup-screen">
+          <div class="mockup-sidebar">
+            <div class="sidebar-logo">VendaFácil</div>
+            <div class="sidebar-item active">Dashboard</div>
+            <div class="sidebar-item">Produtos</div>
+            <div class="sidebar-item">Vendas</div>
+            <div class="sidebar-item">Clientes</div>
+            <div class="sidebar-item">Relatórios</div>
+            <div class="sidebar-item">Configurações</div>
+          </div>
+          <div class="mockup-main">
+            <div class="mockup-stats">
+              <div class="stat-card">
+                <div class="stat-label">Hoje</div>
+                <div class="stat-value stat-green">R$847</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Vendas</div>
+                <div class="stat-value">23</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Estoque</div>
+                <div class="stat-value" style="color: var(--amber);">Alerta 4</div>
+              </div>
+            </div>
+            <div class="mockup-table-wrap">
+              <div class="tbl-title">Últimas vendas</div>
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Qtd</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Arroz 5kg</td><td>3</td><td>R$29,70</td>
+                    <td><span class="badge badge-green">Pago</span></td>
+                  </tr>
+                  <tr>
+                    <td>Feijão 1kg</td><td>2</td><td>R$15,90</td>
+                    <td><span class="badge badge-green">Pago</span></td>
+                  </tr>
+                  <tr>
+                    <td>Óleo de Soja</td><td>1</td><td>R$8,49</td>
+                    <td><span class="badge badge-amber">Fiado</span></td>
+                  </tr>
+                  <tr>
+                    <td>Açúcar 1kg</td><td>4</td><td>R$19,60</td>
+                    <td><span class="badge badge-green">Pago</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-float">
+        <div class="float-label">Faturamento / mês</div>
+        <div class="float-val">R$ 18.420</div>
+        <div class="float-tag">+12% este mês</div>
+      </div>
+
+      <div class="mockup-float2">
+        <div class="f2-dot"></div>
+        <div class="f2-text">
+          <div class="label">Estoque atualizado</div>
+          <div class="val">312 produtos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TRUST BAR ==================== -->
+<div class="trust-bar">
+  <div class="trust-bar-inner">
+    <span class="trust-bar-label">Ideal para:</span>
+    <div class="biz-type"><div class="biz-icon"></div> Mercearias</div>
+    <div class="biz-type"><div class="biz-icon"></div> Açougues</div>
+    <div class="biz-type"><div class="biz-icon"></div> Padarias</div>
+    <div class="biz-type"><div class="biz-icon"></div> Farmácias</div>
+    <div class="biz-type"><div class="biz-icon"></div> Roupas</div>
+    <div class="biz-type"><div class="biz-icon"></div> Pet shops</div>
+    <div class="biz-type"><div class="biz-icon"></div> Lanchonetes</div>
+  </div>
+</div>
+
+<!-- ==================== FUNCIONALIDADES ==================== -->
+<section class="features-section" id="funcionalidades">
+  <div class="container">
+    <div class="section-label">Funcionalidades</div>
+    <h2 class="section-title">Tudo que você precisa, sem complicação</h2>
+    <p class="section-sub">Desenvolvido para quem está no balcão — simples, rápido e sem precisar de treinamento.</p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Controle de Estoque</h3>
+        <p>Cadastre produtos com código, nome, preço e quantidade. Receba alertas automáticos quando o estoque estiver baixo.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Registro de Vendas</h3>
+        <p>Registre vendas em segundos com ou sem leitor de código de barras. Aceite dinheiro, cartão ou fiado.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Gestão de Clientes</h3>
+        <p>Cadastre clientes e controle a caderneta de fiado digital. Saiba quem deve e envie cobranças pelo WhatsApp.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Relatórios Simples</h3>
+        <p>Veja quanto vendeu por dia, semana ou mês. Descubra seus produtos mais vendidos e lucro real.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Cupom e NF Simples</h3>
+        <p>Imprima cupons de venda ou envie por WhatsApp. Emissão de nota fiscal simplificada integrada.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"></div>
+        <h3>Acesso pelo Celular</h3>
+        <p>Use pelo celular, tablet ou computador. Seus dados ficam na nuvem, seguros e sempre disponíveis.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COMO FUNCIONA ==================== -->
+<section class="how-section" id="como-funciona">
+  <div class="container">
+    <div class="section-label">Como Funciona</div>
+    <h2 class="section-title">Comece a usar em menos de 5 minutos</h2>
+    <p class="section-sub">Sem instalação, sem técnico, sem complicação. Crie sua conta e já use.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Crie sua conta</h3>
+        <p>Escolha um plano e cadastre seu negócio. Não precisa de cartão de crédito no teste grátis.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Cadastre seus produtos</h3>
+        <p>Adicione seus produtos com preço e estoque. Pode importar de uma planilha Excel também.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Registre suas vendas</h3>
+        <p>Selecione os produtos, informe o pagamento e pronto. A venda fica salva e o estoque atualiza.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Acompanhe os resultados</h3>
+        <p>Veja os relatórios e saiba exatamente quanto o seu negócio está ganhando a cada dia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PRECOS ==================== -->
+<section class="pricing-section" id="precos">
+  <div class="container">
+    <div class="section-label">Planos</div>
+    <h2 class="section-title">Preço justo para quem trabalha duro</h2>
+    <p class="section-sub">Sem taxa de adesão, sem multa por cancelamento. Cancele quando quiser.</p>
+
+    <div class="pricing-grid">
+      <!-- Básico -->
+      <div class="plan-card">
+        <div class="plan-name">Básico</div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount">49</span>
+        </div>
+        <div class="plan-period">por mês</div>
+        <p class="plan-desc">Perfeito para quem está começando e quer organizar as vendas.</p>
+        <ul class="plan-features">
+          <li>Até 300 produtos cadastrados</li>
+          <li>Registro ilimitado de vendas</li>
+          <li>Controle de estoque</li>
+          <li>Relatórios básicos</li>
+          <li>1 usuário (você mesmo)</li>
+          <li class="disabled">Caderneta de fiado</li>
+          <li class="disabled">Nota fiscal</li>
+          <li class="disabled">Suporte prioritário</li>
+        </ul>
+        <a href="#" class="btn-plan btn-plan-outline"
+           onclick="openPaymentModal('basico', 49); return false;">
+          Começar grátis por 14 dias
+        </a>
+      </div>
+
+      <!-- Pro (popular) -->
+      <div class="plan-card popular">
+        <div class="popular-badge">Mais Popular</div>
+        <div class="plan-name" style="color: var(--green);">Profissional</div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount">99</span>
+        </div>
+        <div class="plan-period">por mês</div>
+        <p class="plan-desc">Para quem quer crescer com controle total do negócio.</p>
+        <ul class="plan-features">
+          <li>Produtos ilimitados</li>
+          <li>Registro ilimitado de vendas</li>
+          <li>Controle de estoque completo</li>
+          <li>Relatórios avançados</li>
+          <li>Até 3 usuários (funcionários)</li>
+          <li>Caderneta de fiado digital</li>
+          <li>Emissão de cupom fiscal</li>
+          <li>Suporte por WhatsApp</li>
+        </ul>
+        <a href="#" class="btn-plan btn-plan-solid"
+           onclick="openPaymentModal('profissional', 99); return false;">
+          Começar grátis por 14 dias
+        </a>
+      </div>
+
+      <!-- Anual -->
+      <div class="plan-card">
+        <div class="plan-name">Profissional Anual</div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount">79</span>
+        </div>
+        <div class="plan-period">por mês · cobrado anualmente</div>
+        <p class="plan-desc">Todos os recursos do Profissional com 2 meses grátis.</p>
+        <ul class="plan-features">
+          <li>Tudo do plano Profissional</li>
+          <li>Economia de R$ 240/ano</li>
+          <li>Nota fiscal NFC-e integrada</li>
+          <li>Suporte prioritário por telefone</li>
+          <li>Treinamento online incluso</li>
+          <li>Backup automático diário</li>
+          <li>Integração com delivery</li>
+          <li>Relatório contábil mensal</li>
+        </ul>
+        <a href="#" class="btn-plan btn-plan-outline"
+           onclick="openPaymentModal('anual', 79); return false;">
+          Assinar anual e economizar
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DEPOIMENTOS ==================== -->
+<section class="testimonials-section">
+  <div class="container">
+    <div class="section-label">Depoimentos</div>
+    <h2 class="section-title">O que dizem os nossos clientes</h2>
+    <p class="section-sub">Mais de 2.400 pequenos negócios em todo o Brasil confiam no VendaFácil.</p>
+
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"Antes eu controlava tudo no caderno e sempre perdia conta. Agora sei exatamente o que tenho em estoque e quanto ganhei no mês. Mudou minha vida!"</p>
+        <div class="testi-person">
+          <div class="testi-avatar">MR</div>
+          <div>
+            <div class="testi-name">Maria das Rosas</div>
+            <div class="testi-biz">Mercadinho da Rosa — Recife, PE</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"O controle de fiado me salvou. Eu não sabia mais quem devia o quê. Agora tudo fica registrado e posso cobrar pelo WhatsApp na hora."</p>
+        <div class="testi-person">
+          <div class="testi-avatar">JF</div>
+          <div>
+            <div class="testi-name">João Ferreira</div>
+            <div class="testi-biz">Açougue do João — Fortaleza, CE</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"Minha padaria cresceu depois que comecei a usar. Os relatórios me mostraram que eu estava vendendo pouco pão de queijo — ajustei o preço e as vendas explodiram."</p>
+        <div class="testi-person">
+          <div class="testi-avatar">CS</div>
+          <div>
+            <div class="testi-name">Carla Souza</div>
+            <div class="testi-biz">Padaria Doce Lar — Belo Horizonte, MG</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="section-label">Dúvidas Frequentes</div>
+    <h2 class="section-title">Perguntas e respostas</h2>
+    <p class="section-sub">Não encontrou sua dúvida? Fale com a gente pelo WhatsApp.</p>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Precisa instalar alguma coisa no computador?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Não! O VendaFácil é 100% online. Basta abrir o navegador (Chrome, Firefox ou qualquer outro) e entrar com seu login. Funciona no celular, tablet e computador.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          O que acontece quando o período gratuito acaba?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Após os 14 dias de teste grátis, você escolhe um plano para continuar. Se não quiser contratar, seus dados ficam guardados por 30 dias — tempo suficiente para exportar tudo.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Posso usar em mais de um computador ou celular?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Sim! Como é na nuvem, você acessa de qualquer dispositivo com internet. No plano Profissional, você pode ter até 3 funcionários com acesso simultâneo.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Funciona sem internet?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">O sistema precisa de internet para funcionar. Porém, se a internet cair por alguns minutos, as vendas ficam salvas localmente e sincronizam quando a conexão voltar.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Posso cancelar quando quiser?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Sim, sem burocracia e sem multa. O cancelamento é feito diretamente pelo sistema com um clique. Você continua tendo acesso até o fim do período pago.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Como funciona o suporte?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Todos os planos têm suporte por e-mail e chat. O plano Profissional inclui suporte por WhatsApp em horário comercial. O plano Anual tem suporte telefônico prioritário.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA FINAL ==================== -->
+<section class="cta-section">
+  <div style="max-width: 600px; margin: 0 auto;">
+    <h2>Comece hoje mesmo, é grátis por 14 dias</h2>
+    <p>Sem cartão de crédito. Sem instalação. Sem complicação. Só você, o seu negócio e o controle que você sempre precisou.</p>
+    <div class="cta-actions">
+      <button class="btn-cta-white" onclick="openModal()">Criar minha conta grátis</button>
+      <a href="https://wa.me/5581991610473" class="btn-cta-outline" target="_blank">Falar no WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          Venda<span>Fácil</span>
+        </a>
+        <p>Sistema de vendas para pequenos negócios. Simples, acessível e feito para o comerciante brasileiro.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Produto</h4>
+        <ul>
+          <li><a href="#funcionalidades">Funcionalidades</a></li>
+          <li><a href="#precos">Preços</a></li>
+          <li><a href="#">Novidades</a></li>
+          <li><a href="#">Integrações</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="#">Sobre nós</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Parceiros</a></li>
+          <li><a href="#">Contato</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Suporte</h4>
+        <ul>
+          <li><a href="#">Central de Ajuda</a></li>
+          <li><a href="https://wa.me/5581991610473" target="_blank">WhatsApp</a></li>
+          <li><a href="#">Termos de Uso</a></li>
+          <li><a href="#">Privacidade (LGPD)</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 VendaFácil · Todos os direitos reservados</span>
+      <span>Feito no Brasil · CNPJ 00.000.000/0001-00</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== MODAL CADASTRO / LOGIN ==================== -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Criar conta grátis</h3>
+    <p class="modal-sub">14 dias grátis · Sem cartão de crédito · Cancele quando quiser</p>
+
+    <!-- Tabs -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="cadastro" onclick="switchTab('cadastro')">Criar conta</button>
+      <button class="modal-tab" data-tab="login" onclick="switchTab('login')">Já tenho conta</button>
+    </div>
+
+    <!-- ===== CADASTRO ===== -->
+    <div class="modal-form-panel" data-panel="cadastro">
+      <!-- Login com Google -->
+      <a href="#" class="btn-google" onclick="handleGoogleLogin(); return false;">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continuar com Google
+      </a>
+
+      <div class="divider">ou preencha os dados</div>
+
+      <div id="signupError" class="form-error"></div>
+      <div id="signupSuccess" class="form-success"></div>
+
+      <div class="form-group">
+        <label>Nome completo *</label>
+        <input type="text" id="signupNome" placeholder="Ex: João Silva">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp</label>
+        <input type="tel" id="signupWhatsapp" placeholder="(81) 99999-9999">
+      </div>
+      <div class="form-group">
+        <label>E-mail *</label>
+        <input type="email" id="signupEmail" placeholder="joao@exemplo.com">
+      </div>
+      <div class="form-group">
+        <label>Tipo do negócio</label>
+        <select id="signupTipoNegocio">
+          <option value="">Selecione...</option>
+          <option>Mercadinho / Mercearia</option>
+          <option>Açougue</option>
+          <option>Padaria</option>
+          <option>Farmácia / Drogaria</option>
+          <option>Loja de roupas</option>
+          <option>Pet shop</option>
+          <option>Lanchonete / Restaurante</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Senha * (mínimo 6 caracteres)</label>
+        <input type="password" id="signupSenha" placeholder="Escolha uma senha segura">
+      </div>
+
+      <button class="btn-form" id="btnSignup" onclick="handleSignup()">Criar minha conta grátis</button>
+      <p class="form-note">Seus dados estão seguros. Não enviamos spam.</p>
+    </div>
+
+    <!-- ===== LOGIN ===== -->
+    <div class="modal-form-panel" data-panel="login" style="display:none;">
+      <a href="#" class="btn-google" onclick="handleGoogleLogin(); return false;">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Entrar com Google
+      </a>
+
+      <div class="divider">ou use seu e-mail</div>
+
+      <div id="loginError" class="form-error"></div>
+      <div id="loginSuccess" class="form-success"></div>
+
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="loginSenha" placeholder="Sua senha">
+      </div>
+
+      <button class="btn-form" id="btnLogin" onclick="handleLogin()">Entrar na minha conta</button>
+      <p class="form-note">
+        <a href="#" style="color: var(--green); font-weight: 600;">Esqueci minha senha</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL PAGAMENTO ==================== -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal payment-modal">
+    <button class="modal-close" onclick="closePaymentModal()">✕</button>
+    <h3>Escolha a forma de pagamento</h3>
+    <p class="modal-sub" id="paymentSubtitle">Selecione como deseja pagar sua assinatura.</p>
+
+    <!-- Métodos disponíveis (renderizados pelo JS) -->
+    <div class="payment-methods" id="paymentMethods"></div>
+
+    <!-- Painel Pix -->
+    <div class="pix-panel" id="pixPanel">
+      <div class="pix-qr-wrap">
+        <div id="pixQrCode"></div>
+        <div class="pix-key-box">
+          <span id="pixKeyDisplay"></span>
+          <button class="btn-copy" onclick="copyPixCode()">Copiar</button>
+        </div>
+      </div>
+      <div class="pix-status">
+        <div class="pix-status-dot" id="pixStatusDot"></div>
+        <span id="pixStatusText">Aguardando pagamento...</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;text-align:center;">
+        Abra o app do seu banco, escaneie o QR Code ou copie a chave Pix acima.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="appToast"></div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="js/payments.js"></script>
+<script type="module">
+  import { Auth } from './js/supabase.js';
+  // Disponibilizar Auth globalmente para o app.js não-module
+  window.Auth = Auth;
+
+  // Verificar estado de autenticação ao carregar
+  const session = await Auth.getSession();
+  if (session) {
+    const navActions = document.getElementById('navActions');
+    const user = session.user;
+    const initials = (user.user_metadata?.nome || user.user_metadata?.full_name || user.email || 'U')
+      .split(' ').map(p => p[0]).join('').toUpperCase().substring(0, 2);
+
+    navActions.innerHTML = `
+      <a href="pages/perfil.html" class="nav-avatar" title="Meu Perfil">${initials}</a>
+      <a href="#" class="btn-nav" onclick="Auth.signOut(); return false;" style="margin-left:8px;">Sair</a>
+    `;
+  }
+</script>
+<script src="js/app.js"></script>
+</body>
+</html>

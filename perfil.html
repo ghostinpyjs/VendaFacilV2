@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Perfil — VendaFácil</title>
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  /* Estilos extras específicos da página de perfil */
+  .plan-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; font-weight: 700; padding: 4px 12px;
+    border-radius: 20px; font-family: 'Sora', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .plan-tag.trial { background: var(--amber-light); color: #92400E; }
+  .plan-tag.basico { background: var(--green-light); color: var(--green-dark); }
+  .plan-tag.profissional { background: var(--green); color: white; }
+  .plan-tag.anual { background: var(--slate); color: white; }
+
+  .trial-banner {
+    background: linear-gradient(135deg, var(--amber-light), #FEF9C3);
+    border: 1px solid var(--amber);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .trial-banner .trial-icon { font-size: 1.4rem; }
+  .trial-banner .trial-text strong { font-size: 0.9rem; color: var(--slate); font-family: 'Sora', sans-serif; }
+  .trial-banner .trial-text p { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .trial-banner .btn-upgrade {
+    margin-left: auto; background: var(--amber); color: white;
+    border: none; padding: 9px 18px; border-radius: 8px;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.8rem;
+    cursor: pointer; white-space: nowrap; text-decoration: none;
+  }
+  .trial-banner .btn-upgrade:hover { background: #D97706; }
+
+  .danger-zone {
+    border: 1px solid #FECACA !important;
+  }
+  .danger-zone .profile-section-title { color: var(--red); }
+
+  .avatar-upload {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 1.5rem;
+  }
+  .avatar-upload .current-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--green-light); color: var(--green-dark);
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border: 3px solid var(--border);
+  }
+  .avatar-upload .current-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-upload-actions { display: flex; flex-direction: column; gap: 6px; }
+  .btn-upload {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 8px 16px; font-size: 0.82rem;
+    font-family: 'Sora', sans-serif; font-weight: 600; cursor: pointer;
+    color: var(--slate); transition: background .2s;
+  }
+  .btn-upload:hover { background: var(--border-light); }
+
+  .info-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border-light);
+    font-size: 0.88rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .info-label { color: var(--muted); font-weight: 500; }
+  .info-row .info-value { color: var(--slate); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ENV Config (normalmente gerado pelo servidor) -->
+<script>
+  window.ENV = {
+    SUPABASE_URL: '',
+    SUPABASE_ANON_KEY: ''
+  };
+  window.PAYMENT_CONFIG = {
+    stripe_enabled: false,
+    pix_enabled: false,
+    pix_chave: '81991610473',
+    pix_beneficiario: 'VendaFacil',
+    pix_cidade: 'Recife',
+    stripe_public_key: ''
+  };
+</script>
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </div>
+    Venda<span>Fácil</span>
+  </a>
+  <ul>
+    <li><a href="/">Início</a></li>
+    <li><a href="/#funcionalidades">Funcionalidades</a></li>
+    <li><a href="/#precos">Planos</a></li>
+    <li id="navActions">
+      <a href="#" class="btn-nav" onclick="confirmLogout(); return false;">Sair</a>
+    </li>
+  </ul>
+</nav>
+
+<!-- PROFILE HERO -->
+<div class="profile-layout">
+  <div class="profile-hero">
+    <div class="profile-hero-inner">
+      <div class="profile-avatar-large" id="heroAvatar">
+        <span id="heroInitials">?</span>
+      </div>
+      <div class="profile-hero-info">
+        <div class="profile-name" id="heroName">Carregando...</div>
+        <div class="profile-email" id="heroEmail"></div>
+        <div class="profile-plan" id="heroPlan">Trial</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-content">
+    <!-- Sidebar de navegação -->
+    <aside class="profile-sidebar">
+      <a class="profile-nav-item active" onclick="showSection('dados'); return false;" href="#">
+        Dados Pessoais
+      </a>
+      <a class="profile-nav-item" onclick="showSection('negocio'); return false;" href="#">
+        Meu Negócio
+      </a>
+      <a class="profile-nav-item" onclick="showSection('seguranca'); return false;" href="#">
+        Segurança
+      </a>
+      <a class="profile-nav-item" onclick="showSection('plano'); return false;" href="#">
+        Plano e Pagamento
+      </a>
+      <div class="profile-nav-divider"></div>
+      <a class="profile-nav-item danger" onclick="confirmLogout(); return false;" href="#">
+        Sair da conta
+      </a>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main id="profileMain">
+
+      <!-- Banner Trial -->
+      <div class="trial-banner" id="trialBanner" style="display:none;">
+        <div class="trial-icon">⏳</div>
+        <div class="trial-text">
+          <strong>Seu período de teste expira em <span id="trialDays">14</span> dias</strong>
+          <p>Assine um plano para continuar aproveitando todos os recursos.</p>
+        </div>
+        <a href="/#precos" class="btn-upgrade">Assinar agora</a>
+      </div>
+
+      <!-- SECAO: Dados Pessoais -->
+      <div class="profile-section-card" id="secao-dados">
+        <div class="profile-section-title">Dados Pessoais</div>
+
+        <div class="avatar-upload">
+          <div class="current-avatar" id="avatarPreview">
+            <span id="avatarInitials">?</span>
+          </div>
+          <div class="avatar-upload-actions">
+            <button class="btn-upload" onclick="document.getElementById('avatarInput').click()">
+              Alterar foto
+            </button>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="previewAvatar(event)">
+            <small style="font-size:0.72rem;color:var(--muted);">JPG ou PNG, máx. 2MB</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome completo</label>
+            <input type="text" id="profileNome" placeholder="Seu nome completo">
+          </div>
+          <div class="form-group">
+            <label>WhatsApp</label>
+            <input type="tel" id="profileWhatsapp" placeholder="(81) 99999-9999">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="profileEmail" disabled style="opacity:.6;cursor:not-allowed;" placeholder="Vinculado à sua conta">
+        </div>
+
+        <div id="dadosError" class="form-error"></div>
+        <div id="dadosSuccess" class="form-success"></div>
+
+        <button class="btn-save" onclick="salvarDados()">Salvar alterações</button>
+      </div>
+
+      <!-- SECAO: Meu Negócio -->
+      <div class="profile-section-card" id="secao-negocio" style="display:none;">
+        <div class="profile-section-title">Informações do Negócio</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do negócio</label>
+            <input type="text" id="profileNomeNegocio" placeholder="Ex: Mercadinho da Rosa">
+          </div>
+          <div class="form-group">
+            <label>Tipo do negócio</label>
+            <select id="profileTipoNegocio">
+              <option value="">Selecione...</option>
+              <option>Mercadinho / Mercearia</option>
+              <option>Açougue</option>
+              <option>Padaria</option>
+              <option>Farmácia / Drogaria</option>
+              <option>Loja de roupas</option>
+              <option>Pet shop</option>
+              <option>Lanchonete / Restaurante</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>CNPJ (opcional)</label>
+          <input type="text" id="profileCnpj" placeholder="00.000.000/0001-00">
+        </div>
+
+        <div id="negocioError" class="form-error"></div>
+        <div id="negocioSuccess" class="form-success"></div>
+
+        <button class="btn-save" onclick="salvarNegocio()">Salvar negócio</button>
+      </div>
+
+      <!-- SECAO: Segurança -->
+      <div class="profile-section-card" id="secao-seguranca" style="display:none;">
+        <div class="profile-section-title">Segurança e Senha</div>
+
+        <div class="form-group">
+          <label>Nova senha</label>
+          <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+          <label>Confirmar nova senha</label>
+          <input type="password" id="confirmarSenha" placeholder="Repita a senha">
+        </div>
+
+        <div id="segurancaError" class="form-error"></div>
+        <div id="segurancaSuccess" class="form-success"></div>
+
+        <button class="btn-save" onclick="salvarSenha()">Atualizar senha</button>
+      </div>
+
+      <!-- SECAO: Plano -->
+      <div class="profile-section-card" id="secao-plano" style="display:none;">
+        <div class="profile-section-title">Plano e Pagamento</div>
+
+        <div id="planoInfo">
+          <div class="info-row">
+            <span class="info-label">Plano atual</span>
+            <span class="info-value" id="planoAtual">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Status</span>
+            <span class="info-value" id="planoStatus">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Válido até</span>
+            <span class="info-value" id="planoExpira">—</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <a href="/#precos" class="btn-save" style="text-decoration:none;display:inline-block;margin-right:8px;">
+            Ver planos
+          </a>
+          <button class="btn-danger" onclick="cancelarPlano()">Cancelar assinatura</button>
+        </div>
+      </div>
+
+      <!-- Zona de Perigo -->
+      <div class="profile-section-card danger-zone" id="secao-dados-extra" style="display:none;">
+        <div class="profile-section-title">Zona de Perigo</div>
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6;">
+          Ao excluir sua conta, todos os dados serão permanentemente removidos. Esta ação não pode ser desfeita.
+        </p>
+        <button class="btn-danger" onclick="confirmarExcluirConta()">Excluir minha conta</button>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="appToast"></div>
+
+<script src="../js/payments.js"></script>
+<script type="module">
+  import { Auth, Profiles, supabase } from '../js/supabase.js';
+
+  let currentUser = null;
+  let currentProfile = null;
+
+  // ---- Inicialização ----
+  async function init() {
+    const session = await Auth.getSession();
+    if (!session) {
+      window.location.href = '/?login=1';
+      return;
+    }
+
+    currentUser = session.user;
+    currentProfile = await Profiles.get(currentUser.id);
+
+    renderProfile();
+    renderTrialBanner();
+  }
+
+  function renderProfile() {
+    if (!currentUser) return;
+
+    const nome = currentProfile?.nome || currentUser.user_metadata?.full_name || currentUser.email;
+    const email = currentUser.email;
+    const plano = currentProfile?.plano || 'trial';
+    const avatarUrl = currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url;
+
+    const initials = nome.split(' ').map(p => p[0]).join('').toUpperCase().substring(0, 2);
+
+    // Hero
+    document.getElementById('heroName').textContent = nome;
+    document.getElementById('heroEmail').textContent = email;
+    document.getElementById('heroInitials').textContent = initials;
+
+    const planoLabels = { trial: 'Teste Grátis', basico: 'Básico', profissional: 'Profissional', anual: 'Anual' };
+    document.getElementById('heroPlan').textContent = planoLabels[plano] || plano;
+
+    if (avatarUrl) {
+      document.getElementById('heroAvatar').innerHTML = `<img src="${avatarUrl}" alt="Avatar">`;
+      document.getElementById('avatarPreview').innerHTML = `<img src="${avatarUrl}" alt="Avatar">`;
+    } else {
+      document.getElementById('avatarInitials').textContent = initials;
+    }
+
+    // Form data
+    document.getElementById('profileNome').value = currentProfile?.nome || nome;
+    document.getElementById('profileEmail').value = email;
+    document.getElementById('profileWhatsapp').value = currentProfile?.whatsapp || '';
+    document.getElementById('profileNomeNegocio').value = currentProfile?.nome_negocio || '';
+    document.getElementById('profileTipoNegocio').value = currentProfile?.tipo_negocio || '';
+    document.getElementById('profileCnpj').value = currentProfile?.cnpj || '';
+
+    // Plano
+    document.getElementById('planoAtual').textContent = planoLabels[plano] || plano;
+    document.getElementById('planoStatus').textContent = plano === 'trial' ? 'Período de teste' : 'Ativo';
+    const expira = currentProfile?.trial_expira
+      ? new Date(currentProfile.trial_expira).toLocaleDateString('pt-BR')
+      : '—';
+    document.getElementById('planoExpira').textContent = expira;
+  }
+
+  function renderTrialBanner() {
+    if (currentProfile?.plano !== 'trial') return;
+    const banner = document.getElementById('trialBanner');
+    if (!banner) return;
+    banner.style.display = 'flex';
+    if (currentProfile?.trial_expira) {
+      const dias = Math.max(0, Math.ceil(
+        (new Date(currentProfile.trial_expira) - Date.now()) / (1000 * 60 * 60 * 24)
+      ));
+      document.getElementById('trialDays').textContent = dias;
+    }
+  }
+
+  // ---- Ações ----
+  window.showSection = function(sec) {
+    const sections = ['dados', 'negocio', 'seguranca', 'plano'];
+    sections.forEach(s => {
+      const el = document.getElementById(`secao-${s}`);
+      if (el) el.style.display = s === sec ? 'block' : 'none';
+    });
+    document.querySelectorAll('.profile-nav-item').forEach(el => {
+      el.classList.toggle('active', el.textContent.trim().toLowerCase().startsWith(
+        { dados: 'dados', negocio: 'meu', seguranca: 'seg', plano: 'plano' }[sec]
+      ));
+    });
+  };
+
+  window.salvarDados = async function() {
+    clearMsgs();
+    const nome = document.getElementById('profileNome').value.trim();
+    const whatsapp = document.getElementById('profileWhatsapp').value.trim();
+
+    if (!nome) { showMsg('dados', 'error', 'Nome não pode estar vazio.'); return; }
+
+    const { error } = await Profiles.update(currentUser.id, { nome, whatsapp });
+    if (error) { showMsg('dados', 'error', 'Erro ao salvar. Tente novamente.'); return; }
+
+    showMsg('dados', 'success', 'Dados atualizados com sucesso!');
+    currentProfile = { ...currentProfile, nome, whatsapp };
+    renderProfile();
+  };
+
+  window.salvarNegocio = async function() {
+    clearMsgs();
+    const nome_negocio = document.getElementById('profileNomeNegocio').value.trim();
+    const tipo_negocio = document.getElementById('profileTipoNegocio').value;
+    const cnpj = document.getElementById('profileCnpj').value.trim();
+
+    const { error } = await Profiles.update(currentUser.id, { nome_negocio, tipo_negocio, cnpj });
+    if (error) { showMsg('negocio', 'error', 'Erro ao salvar. Tente novamente.'); return; }
+    showMsg('negocio', 'success', 'Negócio atualizado!');
+  };
+
+  window.salvarSenha = async function() {
+    clearMsgs();
+    const nova = document.getElementById('novaSenha').value;
+    const confirmar = document.getElementById('confirmarSenha').value;
+
+    if (nova.length < 6) { showMsg('seguranca', 'error', 'Senha deve ter ao menos 6 caracteres.'); return; }
+    if (nova !== confirmar) { showMsg('seguranca', 'error', 'As senhas não coincidem.'); return; }
+
+    const { error } = await Profiles.updatePassword(nova);
+    if (error) { showMsg('seguranca', 'error', 'Erro ao atualizar senha.'); return; }
+    showMsg('seguranca', 'success', 'Senha atualizada com sucesso!');
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('confirmarSenha').value = '';
+  };
+
+  window.cancelarPlano = function() {
+    if (confirm('Tem certeza que deseja cancelar a assinatura? Você continuará com acesso até o fim do período pago.')) {
+      showToast('Assinatura cancelada. Você tem acesso até o fim do período.', 'default');
+    }
+  };
+
+  window.confirmLogout = async function() {
+    if (confirm('Deseja sair da sua conta?')) await Auth.signOut();
+  };
+
+  window.confirmarExcluirConta = function() {
+    const confirmado = prompt('Para confirmar, digite "EXCLUIR" abaixo:');
+    if (confirmado === 'EXCLUIR') {
+      showToast('Entre em contato pelo WhatsApp para excluir sua conta.', 'default');
+    }
+  };
+
+  window.previewAvatar = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showToast('Arquivo muito grande. Máx. 2MB.', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target.result;
+      document.getElementById('avatarPreview').innerHTML = `<img src="${src}" alt="Avatar">`;
+      document.getElementById('heroAvatar').innerHTML = `<img src="${src}" alt="Avatar">`;
+      showToast('Foto atualizada localmente. Integre o upload ao Supabase Storage para salvar.', 'default');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  function showMsg(ctx, tipo, msg) {
+    const el = document.getElementById(`${ctx}${tipo === 'error' ? 'Error' : 'Success'}`);
+    if (el) { el.textContent = msg; el.classList.add('visible'); }
+  }
+
+  function clearMsgs() {
+    document.querySelectorAll('.form-error, .form-success').forEach(el => el.classList.remove('visible'));
+  }
+
+  function showToast(msg, tipo = 'default') {
+    let toast = document.getElementById('appToast');
+    toast.textContent = msg;
+    toast.className = 'toast ' + tipo;
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('visible')));
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('visible'), 3500);
+  }
+
+  window.showToast = showToast;
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Nunca comitar o arquivo .env com credenciais reais
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+npm-debug.log
+
+# Build
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
